@@ -20,4 +20,5 @@
 'Toni Braxton',
 'A-Dessa',
 '25-17',
-'Каспийский Груз']
+'Каспийский Груз',
+'Deutsche Grammatik']

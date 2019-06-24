@@ -1,2 +1,5 @@
 mp3tagmanager/__temp__/*
 mp3tagmanager/*.pyc
+.venv/*
+mp3tagmanager/__pycache__/*
+mp3tagmanager/run.bat

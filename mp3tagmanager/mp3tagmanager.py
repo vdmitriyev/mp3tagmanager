@@ -1,38 +1,32 @@
-﻿# coding: utf-8
-
-__author__     = "Viktor Dmitriyev"
-__copyright__ = "Copyright 2015, Viktor Dmitriyev"
-__credits__ = ["Viktor Dmitriyev"]
-__license__ = "MIT"
-__version__ = "1.0.0"
-__maintainer__ = "-"
-__email__     = ""
-__status__     = "Test"
-__date__    = "07.02.2014"
-__description__ = "Assigning right tags(title, artist, album) to the mp3 files located in the specified folder."
+﻿__license__ = "MIT"
+__version__ = "1.1"
+__created__    = "07.02.2014"
+__updated__    = "21.02.2019"
+__description__ = "Assigning right tags(title, artist, album) to the MP3 files located in a specified folder."
 
 import os
 import sys
 import codecs
-from mutagen.easyid3 import EasyID3
-from folder_iterator import FolderIterator
+import argparse
 import artists
 
 import mutagen
+from mutagen.easyid3 import EasyID3
 
-# INITIAL_CATALOG = u'D:\\Music\\Collection\\'
-INITIAL_CATALOG = u'd:\\Music\\KindleSelected\\Rap\\'
+# helpers
+
+from folder_iterator import FolderIterator
 
 class ChangeMP3Tags():
 
     exceptional_artists = list()
 
-    def __init__(self):
+    def __init__(self, folder):
 
         iterator = FolderIterator()
-        print 'Following folder will be processed: '
+        print ('[i] Following folder will be processed: {0}'.format(folder))
 
-        self.mp3_files_list = iterator.iterate_through_catalog(INITIAL_CATALOG)
+        self.mp3_files_list = iterator.iterate_through_catalog(folder)
         #self.read_exeptional_artists()
         self.exceptional_artists = artists.artists
 
@@ -116,8 +110,8 @@ class ChangeMP3Tags():
             file_name = _input[_input.rfind('\\')+1:]
             file_name = file_name[:file_name.rfind('.')]
             result = ["", file_name]
-        except Exception, e:
-            print '[e] Exception : ' + str(e)
+        except Exception as e:
+            print ('[e] Exception : ' + str(e))
             file_name = 'NoName - NoName'
 
         found = False
@@ -130,14 +124,14 @@ class ChangeMP3Tags():
                         result = self.remove_dubled_delims(file_name, delim)
                     else:
                         result = temp_split
-                except Exception, e:
-                    print '[e] exception in mtd "split_name": ' + str(e)
+                except Exception as e:
+                    print ('[e] exception in mtd "split_name": ' + str(e))
                 found = True
                 break
 
         if not found:
             result = ["", file_name]
-
+        #print (result)
         return result
 
     def change_tags(self, file_name):
@@ -149,6 +143,7 @@ class ChangeMP3Tags():
 
         names = self.split_name(file_name)
 
+        print (file_name)
         try:
             meta = EasyID3(file_name)
             meta.delete()
@@ -156,21 +151,19 @@ class ChangeMP3Tags():
             meta = mutagen.File(file_name, easy=True)
             meta.add_tags()
 
-        artist = ''
-        title = ''
+        artist, title = '', ''
 
         try:
-            artist = names[0].encode('UTF-8')
-            title = names[1].encode('UTF-8')
-        except Exception, ex:
-            print '[e] exception in mtd "change_tags": ' + str(e)
+            artist = names[0]#.encode('UTF-8')
+            title = names[1]#.encode('UTF-8')
+        except Exception as ex:
+            print ('[e] exception in mtd "change_tags": ' + str(e))
 
         meta['artist'] = artist.strip()
         meta['title'] = title.strip()
         meta['album'] = artist.strip()
-
-        meta.save()
-
+        #print (artist, title)
+        meta.save(file_name, v2_version=3)
 
     def process(self):
         """
@@ -178,22 +171,29 @@ class ChangeMP3Tags():
 
             Process the whole mp3 files that are specified.
         """
+
         for folder in self.mp3_files_list:
-            print '\t' + folder
+            print ('\t' + folder)
             for file_name in self.mp3_files_list[folder]:
                 try:
-
                     self.change_tags(folder + '\\' + file_name)
-                except Exception, e:
-                     print '[e] exception in mtd "process": ' + str(e)
+                except Exception as e:
+                     print ('[e] exception in mtd "process": ' + str(e))
 
+def main(folder):
+    ''' Create MP3 changer and starting processing '''
+
+    changer = ChangeMP3Tags(folder)
+    changer.process()
 
 if __name__ == '__main__':
 
     # setting system default encoding to the UTF-8
-    reload(sys)
-    sys.setdefaultencoding('UTF8')
+    #reload(sys)
+    #sys.setdefaultencoding('UTF8')
 
-    # creating MP3 changer and starting processing
-    changer = ChangeMP3Tags()
-    changer.process()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-m", "--folder", required=True, help="folder with MP3 files")
+    args = vars(ap.parse_args())
+    main(folder = args['folder'])
+
